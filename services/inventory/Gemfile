@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+
+gem 'rails-auth'
+gem 'rack'
+gem 'activesupport'
+gem 'pundit'

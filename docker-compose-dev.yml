@@ -1,0 +1,46 @@
+version: '2'
+services:
+  postgres:
+    image: postgres
+  aerospike:
+    image: aerospike
+    ports:
+      # Expose Aerospike & AMC ports
+      - 3000:3000 # service port, for client connections
+      - 3001:3001 # fabric port, for cluster communication
+      - 3002:3002 # mesh port, for cluster heartbeat
+      - 3003:3003 # info port
+  inventory:
+    build:
+      dockerfile: Dockerfile.ruby
+      context: .
+      args: &user_args
+        USER: "${USER}"
+    command: bundle exec rackup --host 0.0.0.0 -p 3000
+    volumes:
+      - ./services/inventory:/code
+    tty: true
+    stdin_open: true
+    depends_on: [postgres, aerospike]
+  tests:
+    build:
+      dockerfile: Dockerfile.scala-sbt
+      context: .
+    command: sbt compile
+    volumes:
+      - ./tests:/code
+    tty: true
+    stdin_open: true
+  proxy:
+    networks:
+      default:
+        aliases:
+          - inventory.wook.io
+    image: nginx
+    volumes:
+      - ./config/nginx:/etc/nginx
+      - ./config/ssl:/etc/ssl
+    depends_on: [inventory]
+    ports:
+      - 80:80
+      - 443:443

@@ -1,0 +1,5 @@
+---
+- resources:
+  - path: "/"
+    method: GET
+  allow_all: false
